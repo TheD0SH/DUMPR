@@ -51,5 +51,19 @@ export const networks: NetworkConfig[] = [
     icon: "/networks/gno.svg",
     enabled: true,
   },
+  {
+    id: "flow",
+    name: "Flow",
+    endpoint: "https://evm.flowscan.io/",
+    icon: "/networks/gno.svg",
+    enabled: true,
+  },
+  {
+    id: "flowtestnet",
+    name: "Flow Testnet",
+    endpoint: "https://evm-testnet.flowscan.io/",
+    icon: "/networks/gno.svg",
+    enabled: true,
+  },
 ]
 

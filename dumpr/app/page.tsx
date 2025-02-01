@@ -115,9 +115,9 @@ export default function TokenDumper() {
       <div className="w-full max-w-3xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Token Dumper
+            DUMPR.
           </h1>
-          <p className="text-white/80">Convert your dust tokens into ETH or SOL in one click</p>
+          <p className="text-white/80">Convert your dust or shidcoins into ETH or SOL in one click</p>
         </div>
 
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
@@ -148,7 +148,7 @@ export default function TokenDumper() {
             <Card className="border-none bg-black/50 backdrop-blur-sm shadow-xl">
               <CardHeader>
                 <CardTitle>Connect Your Wallets</CardTitle>
-                <CardDescription>Add EVM and Solana wallets to start dumping your tokens.</CardDescription>
+                <CardDescription>Add EVM and Solana wallets to start dumping your unwanted tokens.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <ConnectWallet onConnect={handleWalletConnect} />
