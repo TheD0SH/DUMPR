@@ -20,13 +20,13 @@ export function formatTokenValue(value: string, decimals: string | null): string
 }
 
 export function calculateUSDValue(value: string, decimals: string | null, exchangeRate?: string): string {
-  if (!value || !decimals || !exchangeRate) return "0"
+  if (!value || !decimals || !exchangeRate) return "$0.00"
 
   try {
     const tokenAmount = Number.parseFloat(value) / Math.pow(10, Number.parseInt(decimals))
     const rate = Number.parseFloat(exchangeRate)
 
-    if (isNaN(tokenAmount) || isNaN(rate)) return "0"
+    if (isNaN(tokenAmount) || isNaN(rate)) return "$0.00"
 
     const usdValue = tokenAmount * rate
     return usdValue.toLocaleString(undefined, {
@@ -40,6 +40,22 @@ export function calculateUSDValue(value: string, decimals: string | null, exchan
   }
 }
 
+export function calculateTotalUSDValue(tokens: TokenBalance[]): string {
+  const total = tokens.reduce((sum, token) => {
+    const usdValue = Number.parseFloat(
+      calculateUSDValue(token.value, token.token.decimals, token.token.exchange_rate).replace("$", ""),
+    )
+    return sum + (isNaN(usdValue) ? 0 : usdValue)
+  }, 0)
+
+  return total.toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
 export async function fetchTokenBalances(network: NetworkConfig, address: string): Promise<TokenBalance[]> {
   try {
     const response = await fetch(`${network.endpoint}/api/v2/addresses/${address}/token-balances`, {
@@ -47,6 +63,11 @@ export async function fetchTokenBalances(network: NetworkConfig, address: string
         Accept: "application/json",
       },
     })
+
+    if (response.status === 404) {
+      console.log(`No tokens found for address ${address} on ${network.name}`)
+      return []
+    }
 
     if (!response.ok) {
       console.error(`API error for ${network.name}: ${response.status}`)
@@ -72,8 +93,10 @@ export async function fetchAllTokenBalances(networks: NetworkConfig[], address: 
 
   return results.reduce(
     (acc, result, index) => {
-      if (result.status === "fulfilled" && result.value.length > 0) {
+      if (result.status === "fulfilled") {
         acc[networks[index].id] = result.value
+      } else {
+        acc[networks[index].id] = []
       }
       return acc
     },

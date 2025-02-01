@@ -67,16 +67,26 @@ export default function TokenDumper() {
     }
   }
 
-  const handleTokenSelect = (networkId: string, tokenAddress: string) => {
+  const handleTokenSelect = (networkId: string, tokenAddresses: string) => {
     setSelectedTokens((prev) => {
-      const networkTokens = prev[networkId] || []
-      const updatedTokens = networkTokens.includes(tokenAddress)
-        ? networkTokens.filter((addr) => addr !== tokenAddress)
-        : [...networkTokens, tokenAddress]
+      const addresses = tokenAddresses.split(",")
+      if (addresses.length === 1) {
+        // Toggle single token
+        const networkTokens = prev[networkId] || []
+        const updatedTokens = networkTokens.includes(addresses[0])
+          ? networkTokens.filter((addr) => addr !== addresses[0])
+          : [...networkTokens, addresses[0]]
 
-      return {
-        ...prev,
-        [networkId]: updatedTokens,
+        return {
+          ...prev,
+          [networkId]: updatedTokens,
+        }
+      } else {
+        // Set multiple tokens (select all / deselect all)
+        return {
+          ...prev,
+          [networkId]: addresses.filter((addr) => addr !== ""),
+        }
       }
     })
   }
