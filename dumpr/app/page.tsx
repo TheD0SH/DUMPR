@@ -11,7 +11,9 @@ import { NetworkSelector } from "@/components/network-selector"
 import { Coins, Wallet, ArrowRightLeft } from "lucide-react"
 import { networks } from "@/lib/networks"
 import { fetchAllTokenBalances } from "@/lib/api"
-import type { NetworkConfig, TokenBalance, GasTokenBalance } from "@/types/api"
+import type { NetworkConfig, TokenBalance, GasTokenBalance, SelectedToken } from "@/types/api"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface WalletData {
   address: string
@@ -23,9 +25,11 @@ interface WalletData {
 export default function TokenDumper() {
   const [wallets, setWallets] = useState<WalletData[]>([])
   const [selectedNetworks, setSelectedNetworks] = useState<NetworkConfig[]>(networks)
-  const [selectedTokens, setSelectedTokens] = useState<Record<string, string[]>>({})
+  const [selectedTokens, setSelectedTokens] = useState<Record<string, SelectedToken[]>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [currentTab, setCurrentTab] = useState("connect")
+  const [receiveAddress, setReceiveAddress] = useState("")
+  const [receiveToken, setReceiveToken] = useState("eth")
 
   const handleWalletConnect = async (address: string, label: string) => {
     if (!address || wallets.some((w) => w.address.toLowerCase() === address.toLowerCase())) {
@@ -39,7 +43,13 @@ export default function TokenDumper() {
         address,
       )
 
-      setWallets((prev) => [...prev, { address, label, tokens, gasBalances }])
+      setWallets((prev) => {
+        const newWallets = [...prev, { address, label, tokens, gasBalances }]
+        if (newWallets.length === 1) {
+          setReceiveAddress(address)
+        }
+        return newWallets
+      })
       setCurrentTab("select")
     } catch (error) {
       console.error("Error fetching tokens:", error)
@@ -74,26 +84,22 @@ export default function TokenDumper() {
     }
   }
 
-  const handleTokenSelect = (networkId: string, tokenAddresses: string) => {
+  const handleTokenSelect = (
+    networkId: string,
+    tokenAddress: string,
+    isSelected: boolean,
+    tokenSymbol: string,
+    tokenUsdValue: string,
+  ) => {
     setSelectedTokens((prev) => {
-      const addresses = tokenAddresses.split(",")
-      if (addresses.length === 1) {
-        // Toggle single token
-        const networkTokens = prev[networkId] || []
-        const updatedTokens = networkTokens.includes(addresses[0])
-          ? networkTokens.filter((addr) => addr !== addresses[0])
-          : [...networkTokens, addresses[0]]
+      const networkTokens = prev[networkId] || []
+      const updatedTokens = isSelected
+        ? [...networkTokens, { address: tokenAddress, symbol: tokenSymbol, usdValue: tokenUsdValue }]
+        : networkTokens.filter((token) => token.address !== tokenAddress)
 
-        return {
-          ...prev,
-          [networkId]: updatedTokens,
-        }
-      } else {
-        // Set multiple tokens (select all / deselect all)
-        return {
-          ...prev,
-          [networkId]: addresses.filter((addr) => addr !== ""),
-        }
+      return {
+        ...prev,
+        [networkId]: updatedTokens,
       }
     })
   }
@@ -139,10 +145,8 @@ export default function TokenDumper() {
 
   const handleDump = () => {
     console.log("Dumping tokens:", selectedTokens)
-    console.log(
-      "From wallets:",
-      wallets.map((w) => ({ address: w.address, label: w.label })),
-    )
+    console.log("Receive address:", receiveAddress)
+    console.log("Receive token:", receiveToken)
   }
 
   return (
@@ -227,8 +231,12 @@ export default function TokenDumper() {
                     <ul className="space-y-1">
                       {Object.entries(selectedTokens).map(([networkId, tokens]) =>
                         tokens.map((token, index) => (
-                          <li key={`${networkId}-${token}-${index}`} className="text-sm text-white/60">
-                            {networkId}: {token}
+                          <li
+                            key={`${networkId}-${token.address}-${index}`}
+                            className="text-sm text-white/60 cursor-pointer hover:text-white/80"
+                            onClick={() => alert(`Token Address: ${token.address}`)}
+                          >
+                            {networkId}: {token.symbol} (${token.usdValue})
                           </li>
                         )),
                       )}
@@ -251,16 +259,34 @@ export default function TokenDumper() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Receive</label>
-                  <select className="w-full bg-white/5 border-0 rounded-lg p-2 text-sm text-white">
-                    <option value="eth">ETH</option>
-                    <option value="sol">SOL</option>
-                  </select>
+                  <Select value={receiveToken} onValueChange={setReceiveToken}>
+                    <SelectTrigger className="w-full bg-white/5 border-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="eth">ETH</SelectItem>
+                      <SelectItem value="sol">SOL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="receiveAddress" className="text-sm font-medium">
+                    Receive Address
+                  </label>
+                  <Input
+                    id="receiveAddress"
+                    placeholder="Enter receive address"
+                    value={receiveAddress}
+                    onChange={(e) => setReceiveAddress(e.target.value)}
+                    className="bg-white/5 border-0"
+                  />
                 </div>
 
                 <Button
                   onClick={handleDump}
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-                  disabled={Object.keys(selectedTokens).length === 0}
+                  disabled={Object.keys(selectedTokens).length === 0 || !receiveAddress}
                 >
                   Dump Tokens
                 </Button>

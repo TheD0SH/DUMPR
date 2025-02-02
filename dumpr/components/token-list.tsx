@@ -4,15 +4,21 @@ import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Loader2, ChevronDown, ChevronRight } from "lucide-react"
-import type { TokenBalance, GasTokenBalance } from "@/types/api"
+import type { TokenBalance, GasTokenBalance, SelectedToken } from "@/types/api"
 import { formatTokenValue, calculateUSDValue, calculateTotalUSDValue } from "@/lib/api"
 
 interface TokenListProps {
   tokens: Record<string, TokenBalance[]>
   gasBalances: Record<string, GasTokenBalance>
   isLoading: boolean
-  onTokenSelect: (networkId: string, tokenAddress: string) => void
-  selectedTokens: Record<string, string[]>
+  onTokenSelect: (
+    networkId: string,
+    tokenAddress: string,
+    isSelected: boolean,
+    tokenSymbol: string,
+    tokenUsdValue: string,
+  ) => void
+  selectedTokens: Record<string, SelectedToken[]>
 }
 
 export const TokenList = ({
@@ -51,10 +57,17 @@ export const TokenList = ({
     }))
   }
 
-  const handleSelectAll = (networkId: string, select: boolean) => {
+  const handleSelectAll = (networkId: string) => {
     const networkTokens = tokens[networkId] || []
-    const updatedTokens = select ? networkTokens.map((t) => t.token.address) : []
-    onTokenSelect(networkId, updatedTokens.join(","))
+    const gasToken = gasBalances[networkId]
+    const allTokenAddresses = [...(gasToken ? [networkId] : []), ...networkTokens.map((t) => t.token.address)]
+    const allSelected = allTokenAddresses.every((address) =>
+      selectedTokens[networkId]?.some((token) => token.address === address),
+    )
+
+    allTokenAddresses.forEach((address) => {
+      onTokenSelect(networkId, address, !allSelected, "", "")
+    })
   }
 
   const calculateTotalNetworkValue = (networkId: string) => {
@@ -74,6 +87,10 @@ export const TokenList = ({
         const gasBalance = gasBalances[networkId]
         const totalValue = calculateTotalNetworkValue(networkId)
         const isExpanded = expandedNetworks[networkId]
+        const allTokenAddresses = [...(gasBalance ? [networkId] : []), ...networkTokens.map((t) => t.token.address)]
+        const allSelected = allTokenAddresses.every((address) =>
+          selectedTokens[networkId]?.some((token) => token.address === address),
+        )
 
         return (
           <div key={`network-${networkId}`} className="border rounded-lg overflow-hidden">
@@ -86,18 +103,22 @@ export const TokenList = ({
                 <h3 className="text-sm font-medium capitalize">{networkId}</h3>
               </div>
               <div className="text-sm text-muted-foreground">
-                {networkTokens.length + 1} tokens | {totalValue}
+                {networkTokens.length + (gasBalance ? 1 : 0)} tokens | {totalValue}
               </div>
             </div>
 
             {isExpanded && (
               <div className="p-4 space-y-4">
                 <div className="flex justify-between">
-                  <Button size="sm" variant="outline" onClick={() => handleSelectAll(networkId, true)}>
-                    Select All
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleSelectAll(networkId, false)}>
-                    Deselect All
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSelectAll(networkId)
+                    }}
+                  >
+                    {allSelected ? "Deselect All" : "Select All"}
                   </Button>
                 </div>
 
@@ -105,8 +126,23 @@ export const TokenList = ({
                   {gasBalance && (
                     <li className="flex items-center justify-between bg-white/5 p-3 rounded-lg">
                       <div className="flex items-center gap-3">
+                        <Checkbox
+                          id={`${networkId}-gas`}
+                          checked={selectedTokens[networkId]?.some((token) => token.address === networkId)}
+                          onCheckedChange={(checked) =>
+                            onTokenSelect(
+                              networkId,
+                              networkId,
+                              checked as boolean,
+                              gasBalance.symbol,
+                              gasBalance.usdBalance,
+                            )
+                          }
+                        />
                         <div>
-                          <p className="text-sm font-medium">{gasBalance.symbol} (Gas Token)</p>
+                          <label htmlFor={`${networkId}-gas`} className="text-sm font-medium cursor-pointer">
+                            {gasBalance.symbol} (Gas Token)
+                          </label>
                           <p className="text-xs text-muted-foreground">
                             Balance: {formatTokenValue(gasBalance.balance, "18")}
                           </p>
@@ -127,8 +163,16 @@ export const TokenList = ({
                           <div className="flex items-center gap-3">
                             <Checkbox
                               id={`${networkId}-${token.token.address}-${index}`}
-                              checked={selectedTokens[networkId]?.includes(token.token.address)}
-                              onCheckedChange={() => onTokenSelect(networkId, token.token.address)}
+                              checked={selectedTokens[networkId]?.some((t) => t.address === token.token.address)}
+                              onCheckedChange={(checked) =>
+                                onTokenSelect(
+                                  networkId,
+                                  token.token.address,
+                                  checked as boolean,
+                                  token.token.symbol,
+                                  usdValue,
+                                )
+                              }
                             />
                             <div>
                               <label

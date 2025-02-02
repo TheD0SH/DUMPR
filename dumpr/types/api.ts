@@ -31,3 +31,9 @@ export interface WalletData {
   gasBalances: Record<string, GasTokenBalance>
 }
 
+export interface SelectedToken {
+  address: string
+  symbol: string
+  usdValue: string
+}
+
