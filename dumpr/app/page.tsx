@@ -11,7 +11,7 @@ import { NetworkSelector } from "@/components/network-selector"
 import { Coins, Wallet, ArrowRightLeft } from "lucide-react"
 import { networks } from "@/lib/networks"
 import { fetchAllTokenBalances } from "@/lib/api"
-import type { NetworkConfig, TokenBalance, WalletData } from "@/types/api"
+import type { NetworkConfig, TokenBalance, GasTokenBalance, WalletData } from "@/types/api"
 
 export default function TokenDumper() {
   const [wallets, setWallets] = useState<WalletData[]>([])
@@ -27,12 +27,12 @@ export default function TokenDumper() {
 
     setIsLoading(true)
     try {
-      const tokenBalances = await fetchAllTokenBalances(
+      const { tokens, gasBalances } = await fetchAllTokenBalances(
         selectedNetworks.filter((n) => n.enabled),
         address,
       )
 
-      setWallets((prev) => [...prev, { address, tokens: tokenBalances }])
+      setWallets((prev) => [...prev, { address, tokens, gasBalances }])
       setCurrentTab("select")
     } catch (error) {
       console.error("Error fetching tokens:", error)
@@ -51,13 +51,13 @@ export default function TokenDumper() {
     setIsLoading(true)
     try {
       const updatedWallets = await Promise.all(
-        wallets.map(async (wallet) => ({
-          address: wallet.address,
-          tokens: await fetchAllTokenBalances(
+        wallets.map(async (wallet) => {
+          const { tokens, gasBalances } = await fetchAllTokenBalances(
             networks.filter((n) => n.enabled),
             wallet.address,
-          ),
-        })),
+          )
+          return { address: wallet.address, tokens, gasBalances }
+        }),
       )
       setWallets(updatedWallets)
     } catch (error) {
@@ -91,7 +91,7 @@ export default function TokenDumper() {
     })
   }
 
-  // Combine tokens from all wallets
+  // Combine tokens and gas balances from all wallets
   const allTokens = wallets.reduce(
     (acc, wallet) => {
       Object.entries(wallet.tokens).forEach(([networkId, tokens]) => {
@@ -106,6 +106,30 @@ export default function TokenDumper() {
     {} as Record<string, TokenBalance[]>,
   )
 
+  const allGasBalances = wallets.reduce(
+    (acc, wallet) => {
+      Object.entries(wallet.gasBalances).forEach(([networkId, gasBalance]) => {
+        if (!acc[networkId]) {
+          acc[networkId] = gasBalance
+        } else {
+          // Sum up gas balances if multiple wallets have balances on the same network
+          const existingBalance = Number.parseFloat(acc[networkId].balance)
+          const newBalance = Number.parseFloat(gasBalance.balance)
+          const totalBalance = existingBalance + newBalance
+          acc[networkId] = {
+            balance: totalBalance.toString(),
+            usdBalance: (
+              Number.parseFloat(acc[networkId].usdBalance) + Number.parseFloat(gasBalance.usdBalance)
+            ).toFixed(2),
+            symbol: gasBalance.symbol,
+          }
+        }
+      })
+      return acc
+    },
+    {} as Record<string, GasTokenBalance>,
+  )
+
   const handleDump = () => {
     console.log("Dumping tokens:", selectedTokens)
   }
@@ -115,9 +139,9 @@ export default function TokenDumper() {
       <div className="w-full max-w-3xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            DUMPR.
+            Token Dumper
           </h1>
-          <p className="text-white/80">Convert your dust or shidcoins into ETH or SOL in one click</p>
+          <p className="text-white/80">Convert your dust tokens into ETH or SOL in one click</p>
         </div>
 
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
@@ -148,7 +172,7 @@ export default function TokenDumper() {
             <Card className="border-none bg-black/50 backdrop-blur-sm shadow-xl">
               <CardHeader>
                 <CardTitle>Connect Your Wallets</CardTitle>
-                <CardDescription>Add EVM and Solana wallets to start dumping your unwanted tokens.</CardDescription>
+                <CardDescription>Add EVM and Solana wallets to start dumping your tokens.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <ConnectWallet onConnect={handleWalletConnect} />
@@ -167,6 +191,7 @@ export default function TokenDumper() {
               <CardContent>
                 <TokenList
                   tokens={allTokens}
+                  gasBalances={allGasBalances}
                   isLoading={isLoading}
                   onTokenSelect={handleTokenSelect}
                   selectedTokens={selectedTokens}

@@ -1,4 +1,4 @@
-import type { TokenBalance, NetworkConfig } from "@/types/api"
+import type { TokenBalance, NetworkConfig, GasTokenBalance } from "@/types/api"
 
 export function formatTokenValue(value: string, decimals: string | null): string {
   if (!value || !decimals) return "0"
@@ -85,13 +85,70 @@ export async function fetchTokenBalances(network: NetworkConfig, address: string
   }
 }
 
-export async function fetchAllTokenBalances(networks: NetworkConfig[], address: string) {
+export async function fetchGasTokenBalance(network: NetworkConfig, address: string): Promise<GasTokenBalance | null> {
+  try {
+    const response = await fetch(`${network.endpoint}/api/v2/addresses/${address}`, {
+      headers: {
+        Accept: "application/json",
+      },
+    })
+
+    if (!response.ok) {
+      console.error(`API error for ${network.name} gas balance: ${response.status}`)
+      return null
+    }
+
+    const data = await response.json()
+
+    if (!data.coin_balance || !data.exchange_rate) {
+      console.error(`Invalid data for ${network.name} gas balance`)
+      return null
+    }
+
+    const balance = Number.parseFloat(data.coin_balance)
+    const exchangeRate = Number.parseFloat(data.exchange_rate)
+    const usdBalance = balance * exchangeRate * 0.000000000000000001 // Convert only USD value to ETH scale
+
+    return {
+      balance: balance.toString(),
+      usdBalance: usdBalance.toFixed(2),
+      symbol: network.gasSymbol || "GAS",
+    }
+  } catch (error) {
+    console.error(`Error fetching gas balance for ${network.name}:`, error)
+    return null
+  }
+}
+
+export async function fetchAllGasTokenBalances(networks: NetworkConfig[], address: string) {
   if (!address || !networks.length) return {}
 
-  const promises = networks.map((network) => fetchTokenBalances(network, address))
+  const promises = networks.map((network) => fetchGasTokenBalance(network, address))
   const results = await Promise.allSettled(promises)
 
   return results.reduce(
+    (acc, result, index) => {
+      if (result.status === "fulfilled" && result.value) {
+        acc[networks[index].id] = result.value
+      }
+      return acc
+    },
+    {} as Record<string, GasTokenBalance>,
+  )
+}
+
+export async function fetchAllTokenBalances(networks: NetworkConfig[], address: string) {
+  if (!address || !networks.length) return { tokens: {}, gasBalances: {} }
+
+  const tokenPromises = networks.map((network) => fetchTokenBalances(network, address))
+  const gasPromises = networks.map((network) => fetchGasTokenBalance(network, address))
+
+  const [tokenResults, gasResults] = await Promise.all([
+    Promise.allSettled(tokenPromises),
+    Promise.allSettled(gasPromises),
+  ])
+
+  const tokens = tokenResults.reduce(
     (acc, result, index) => {
       if (result.status === "fulfilled") {
         acc[networks[index].id] = result.value
@@ -102,5 +159,17 @@ export async function fetchAllTokenBalances(networks: NetworkConfig[], address: 
     },
     {} as Record<string, TokenBalance[]>,
   )
+
+  const gasBalances = gasResults.reduce(
+    (acc, result, index) => {
+      if (result.status === "fulfilled" && result.value) {
+        acc[networks[index].id] = result.value
+      }
+      return acc
+    },
+    {} as Record<string, GasTokenBalance>,
+  )
+
+  return { tokens, gasBalances }
 }
 

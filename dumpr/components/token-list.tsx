@@ -4,17 +4,24 @@ import { useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Loader2, ChevronDown, ChevronRight } from "lucide-react"
-import type { TokenBalance } from "@/types/api"
+import type { TokenBalance, GasTokenBalance } from "@/types/api"
 import { formatTokenValue, calculateUSDValue, calculateTotalUSDValue } from "@/lib/api"
 
 interface TokenListProps {
   tokens: Record<string, TokenBalance[]>
+  gasBalances: Record<string, GasTokenBalance>
   isLoading: boolean
   onTokenSelect: (networkId: string, tokenAddress: string) => void
   selectedTokens: Record<string, string[]>
 }
 
-export const TokenList = ({ tokens = {}, isLoading = false, onTokenSelect, selectedTokens = {} }: TokenListProps) => {
+export const TokenList = ({
+  tokens = {},
+  gasBalances = {},
+  isLoading = false,
+  onTokenSelect,
+  selectedTokens = {},
+}: TokenListProps) => {
   const [expandedNetworks, setExpandedNetworks] = useState<Record<string, boolean>>({})
 
   if (isLoading) {
@@ -50,11 +57,22 @@ export const TokenList = ({ tokens = {}, isLoading = false, onTokenSelect, selec
     onTokenSelect(networkId, updatedTokens.join(","))
   }
 
+  const calculateTotalNetworkValue = (networkId: string) => {
+    const networkTokens = tokens[networkId] || []
+    const tokenValue = Number.parseFloat(calculateTotalUSDValue(networkTokens).replace("$", ""))
+    const gasValue = Number.parseFloat(gasBalances[networkId]?.usdBalance || "0")
+    return (tokenValue + gasValue).toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+    })
+  }
+
   return (
     <div className="space-y-4">
       {networkIds.map((networkId) => {
         const networkTokens = tokens[networkId] || []
-        const totalUSDValue = calculateTotalUSDValue(networkTokens)
+        const gasBalance = gasBalances[networkId]
+        const totalValue = calculateTotalNetworkValue(networkId)
         const isExpanded = expandedNetworks[networkId]
 
         return (
@@ -68,7 +86,7 @@ export const TokenList = ({ tokens = {}, isLoading = false, onTokenSelect, selec
                 <h3 className="text-sm font-medium capitalize">{networkId}</h3>
               </div>
               <div className="text-sm text-muted-foreground">
-                {networkTokens.length} tokens | {totalUSDValue}
+                {networkTokens.length + 1} tokens | {totalValue}
               </div>
             </div>
 
@@ -83,9 +101,22 @@ export const TokenList = ({ tokens = {}, isLoading = false, onTokenSelect, selec
                   </Button>
                 </div>
 
-                {networkTokens.length > 0 ? (
-                  <ul className="space-y-2">
-                    {networkTokens.map((token, index) => {
+                <ul className="space-y-2">
+                  {gasBalance && (
+                    <li className="flex items-center justify-between bg-white/5 p-3 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <p className="text-sm font-medium">{gasBalance.symbol} (Gas Token)</p>
+                          <p className="text-xs text-muted-foreground">
+                            Balance: {formatTokenValue(gasBalance.balance, "18")}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-sm text-muted-foreground">${gasBalance.usdBalance}</span>
+                    </li>
+                  )}
+                  {networkTokens.length > 0 ? (
+                    networkTokens.map((token, index) => {
                       const formattedValue = formatTokenValue(token.value, token.token.decimals)
                       const usdValue = calculateUSDValue(token.value, token.token.decimals, token.token.exchange_rate)
                       return (
@@ -112,11 +143,11 @@ export const TokenList = ({ tokens = {}, isLoading = false, onTokenSelect, selec
                           <span className="text-sm text-muted-foreground">{usdValue}</span>
                         </li>
                       )
-                    })}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No tokens detected for this network</p>
-                )}
+                    })
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No additional tokens detected for this network</p>
+                  )}
+                </ul>
               </div>
             )}
           </div>
