@@ -6,15 +6,16 @@ import { Input } from "@/components/ui/input"
 import { PlusCircle } from "lucide-react"
 
 interface ConnectWalletProps {
-  onConnect: (address: string) => void
+  onConnect: (address: string, label: string) => void
+  walletCount: number
 }
 
-export const ConnectWallet = ({ onConnect }: ConnectWalletProps) => {
+export const ConnectWallet = ({ onConnect, walletCount }: ConnectWalletProps) => {
   const [address, setAddress] = useState("")
 
   const handleConnect = () => {
     if (address) {
-      onConnect(address)
+      onConnect(address, `Wallet ${walletCount + 1}`)
       setAddress("")
     }
   }

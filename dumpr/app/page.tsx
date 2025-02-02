@@ -11,7 +11,14 @@ import { NetworkSelector } from "@/components/network-selector"
 import { Coins, Wallet, ArrowRightLeft } from "lucide-react"
 import { networks } from "@/lib/networks"
 import { fetchAllTokenBalances } from "@/lib/api"
-import type { NetworkConfig, TokenBalance, GasTokenBalance, WalletData } from "@/types/api"
+import type { NetworkConfig, TokenBalance, GasTokenBalance } from "@/types/api"
+
+interface WalletData {
+  address: string
+  label: string
+  tokens: Record<string, TokenBalance[]>
+  gasBalances: Record<string, GasTokenBalance>
+}
 
 export default function TokenDumper() {
   const [wallets, setWallets] = useState<WalletData[]>([])
@@ -20,7 +27,7 @@ export default function TokenDumper() {
   const [isLoading, setIsLoading] = useState(false)
   const [currentTab, setCurrentTab] = useState("connect")
 
-  const handleWalletConnect = async (address: string) => {
+  const handleWalletConnect = async (address: string, label: string) => {
     if (!address || wallets.some((w) => w.address.toLowerCase() === address.toLowerCase())) {
       return
     }
@@ -32,7 +39,7 @@ export default function TokenDumper() {
         address,
       )
 
-      setWallets((prev) => [...prev, { address, tokens, gasBalances }])
+      setWallets((prev) => [...prev, { address, label, tokens, gasBalances }])
       setCurrentTab("select")
     } catch (error) {
       console.error("Error fetching tokens:", error)
@@ -56,7 +63,7 @@ export default function TokenDumper() {
             networks.filter((n) => n.enabled),
             wallet.address,
           )
-          return { address: wallet.address, tokens, gasBalances }
+          return { ...wallet, tokens, gasBalances }
         }),
       )
       setWallets(updatedWallets)
@@ -132,6 +139,10 @@ export default function TokenDumper() {
 
   const handleDump = () => {
     console.log("Dumping tokens:", selectedTokens)
+    console.log(
+      "From wallets:",
+      wallets.map((w) => ({ address: w.address, label: w.label })),
+    )
   }
 
   return (
@@ -175,9 +186,12 @@ export default function TokenDumper() {
                 <CardDescription>Add EVM and Solana wallets to start dumping your tokens.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <ConnectWallet onConnect={handleWalletConnect} />
+                <ConnectWallet onConnect={handleWalletConnect} walletCount={wallets.length} />
                 <NetworkSelector onNetworkChange={handleNetworkChange} />
-                <WalletList wallets={wallets.map((w) => w.address)} onRemove={handleWalletRemove} />
+                <WalletList
+                  wallets={wallets.map((w) => ({ address: w.address, label: w.label }))}
+                  onRemove={handleWalletRemove}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -222,6 +236,17 @@ export default function TokenDumper() {
                   ) : (
                     <p className="text-sm text-white/60">No tokens selected</p>
                   )}
+                </div>
+
+                <div className="rounded-lg bg-white/5 p-4">
+                  <h3 className="text-sm font-medium mb-2">From Wallets:</h3>
+                  <ul className="space-y-1">
+                    {wallets.map((wallet, index) => (
+                      <li key={index} className="text-sm text-white/60">
+                        {wallet.label}: {wallet.address}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <div className="space-y-2">
