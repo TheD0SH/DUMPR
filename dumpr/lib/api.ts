@@ -93,16 +93,33 @@ export async function fetchGasTokenBalance(network: NetworkConfig, address: stri
       },
     })
 
+    if (response.status === 404) {
+      console.log(`No gas balance found for address ${address} on ${network.name}`)
+      return {
+        balance: "0",
+        usdBalance: "0",
+        symbol: network.gasSymbol || "GAS",
+      }
+    }
+
     if (!response.ok) {
       console.error(`API error for ${network.name} gas balance: ${response.status}`)
-      return null
+      return {
+        balance: "0",
+        usdBalance: "0",
+        symbol: network.gasSymbol || "GAS",
+      }
     }
 
     const data = await response.json()
 
     if (!data.coin_balance || !data.exchange_rate) {
       console.error(`Invalid data for ${network.name} gas balance`)
-      return null
+      return {
+        balance: "0",
+        usdBalance: "0",
+        symbol: network.gasSymbol || "GAS",
+      }
     }
 
     const balance = Number.parseFloat(data.coin_balance)
@@ -116,7 +133,11 @@ export async function fetchGasTokenBalance(network: NetworkConfig, address: stri
     }
   } catch (error) {
     console.error(`Error fetching gas balance for ${network.name}:`, error)
-    return null
+    return {
+      balance: "0",
+      usdBalance: "0",
+      symbol: network.gasSymbol || "GAS",
+    }
   }
 }
 

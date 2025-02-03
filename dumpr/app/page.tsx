@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WalletList } from "@/components/wallet-list"
 import { TokenList } from "@/components/token-list"
@@ -102,6 +102,17 @@ export default function TokenDumper() {
         [networkId]: updatedTokens,
       }
     })
+  }
+
+  const calculateTotalValue = () => {
+    return Object.values(selectedTokens).reduce((total, networkTokens) => {
+      return (
+        total +
+        networkTokens.reduce((networkTotal, token) => {
+          return networkTotal + Number.parseFloat(token.usdValue.replace("$", ""))
+        }, 0)
+      )
+    }, 0)
   }
 
   // Combine tokens and gas balances from all wallets
@@ -259,15 +270,18 @@ export default function TokenDumper() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Receive</label>
-                  <Select value={receiveToken} onValueChange={setReceiveToken}>
-                    <SelectTrigger className="w-full bg-white/5 border-0">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="eth">ETH</SelectItem>
-                      <SelectItem value="sol">SOL</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center space-x-2">
+                    <Select value={receiveToken} onValueChange={setReceiveToken}>
+                      <SelectTrigger className="w-full bg-white/5 border-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="eth">ETH</SelectItem>
+                        <SelectItem value="sol">SOL</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="text-sm font-medium">Estimated Total: ${calculateTotalValue().toFixed(2)}</div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

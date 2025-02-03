@@ -65,8 +65,13 @@ export const TokenList = ({
       selectedTokens[networkId]?.some((token) => token.address === address),
     )
 
-    allTokenAddresses.forEach((address) => {
-      onTokenSelect(networkId, address, !allSelected, "", "")
+    if (gasToken) {
+      onTokenSelect(networkId, networkId, !allSelected, gasToken.symbol, gasToken.usdBalance)
+    }
+
+    networkTokens.forEach((token) => {
+      const usdValue = calculateUSDValue(token.value, token.token.decimals, token.token.exchange_rate)
+      onTokenSelect(networkId, token.token.address, !allSelected, token.token.symbol, usdValue.replace("$", ""))
     })
   }
 
@@ -170,7 +175,7 @@ export const TokenList = ({
                                   token.token.address,
                                   checked as boolean,
                                   token.token.symbol,
-                                  usdValue,
+                                  usdValue.replace("$", ""),
                                 )
                               }
                             />
