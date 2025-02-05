@@ -3,8 +3,8 @@ import type { Metadata } from "next"
 import type React from "react"
 
 export const metadata: Metadata = {
-  title: "Token Dumper",
-  description: "Convert your dust tokens into ETH or SOL",
+  title: "DUMPR - Convert Your Dust to Treasure",
+  description: "Effortlessly convert your small token balances across multiple chains into ETH or SOL",
 }
 
 export default function RootLayout({
