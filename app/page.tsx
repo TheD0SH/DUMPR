@@ -2,19 +2,18 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
-import { useState, useEffect } from "react"
 
 export default function LandingPage() {
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+  //const [isVideoLoaded, setIsVideoLoaded] = useState(false)
 
-  useEffect(() => {
-    const videoElement = document.getElementById("bg-video") as HTMLVideoElement
-    if (videoElement) {
-      videoElement.play().catch((error) => {
-        console.log("Video autoplay failed:", error)
-      })
-    }
-  }, [])
+  //useEffect(() => {
+  //  const videoElement = document.getElementById("bg-video") as HTMLVideoElement
+  //  if (videoElement) {
+  //    videoElement.play().catch((error) => {
+  //      console.log("Video autoplay failed:", error)
+  //    })
+  //  }
+  //}, [])
 
   return (
     <div className="min-h-screen bg-black text-white">
