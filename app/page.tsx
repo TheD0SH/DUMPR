@@ -66,11 +66,11 @@ export default function LandingPage() {
               </h1>
               <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
                 The DUMPR Agent converts your small token balances across multiple chains into ETH, by maximizing your
-                portfolio's value using AI market analysis.
+                portfolio&apos;s value using AI market analysis.
               </p>
               <Link href="/app">
                 <Button className="h-12 px-6 text-base bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full inline-flex items-center gap-2">
-                  Let's Dump
+                  Let&apos;s Dump
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
@@ -80,7 +80,6 @@ export default function LandingPage() {
 
         {/* Rest of the sections */}
         <section id="features" className="py-24 bg-[#1B2232]">
-          {/* Features section content */}
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-16">Key Features</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -132,7 +131,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* How It Works section */}
         <section id="how-it-works" className="py-24 bg-black">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-16">How It Works</h2>
@@ -155,7 +153,7 @@ export default function LandingPage() {
                     <span className="text-xl font-bold">2</span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Select Networks & Tokens</h3>
+                    <h3 className="text-xl font-semibold mb-2">Select Networks &amp; Tokens</h3>
                     <p className="text-gray-400">
                       Choose which networks to scan and select the tokens you want to convert.
                     </p>
@@ -179,7 +177,7 @@ export default function LandingPage() {
                     <span className="text-xl font-bold">4</span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Review & Confirm</h3>
+                    <h3 className="text-xl font-semibold mb-2">Review &amp; Confirm</h3>
                     <p className="text-gray-400">
                       Check the conversion details and confirm the transaction to receive your consolidated ETH.
                     </p>
@@ -190,7 +188,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* FAQ section */}
         <section id="faq" className="py-24 bg-[#1B2232]">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-16">Frequently Asked Questions</h2>
@@ -215,7 +212,7 @@ export default function LandingPage() {
               <div className="p-8 rounded-lg bg-[#252B3B]">
                 <h3 className="text-xl font-semibold mb-4">Which networks are supported?</h3>
                 <p className="text-gray-400">
-                  DUMPR supports major networks including Base & Flow. If hackathon project get's traction we will
+                  DUMPR supports major networks including Base &amp; Flow. If hackathon project gets traction we will
                   deploy to more networks.
                 </p>
               </div>
@@ -233,7 +230,7 @@ export default function LandingPage() {
 
         <footer className="bg-black py-8">
           <div className="container mx-auto px-4 text-center text-gray-400">
-            <p>&copy; 2025 DUMPR Agent. All rights reserved.</p>
+            <p>&copy; 2024 DUMPR Agent. All rights reserved.</p>
           </div>
         </footer>
       </div>
