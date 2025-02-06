@@ -2,15 +2,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
-import type { TokenBalance, GasTokenBalance } from "@/types/api"
-
-// Update the WalletData interface
-interface WalletData {
-  address: string
-  label: string
-  tokens: Record<string, TokenBalance[] | null>
-  gasBalances: Record<string, GasTokenBalance>
-}
 
 export default function LandingPage() {
   //const [isVideoLoaded, setIsVideoLoaded] = useState(false)
