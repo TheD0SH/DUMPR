@@ -8,17 +8,18 @@ import { WalletList } from "@/components/wallet-list"
 import { TokenList } from "@/components/token-list"
 import { ConnectWallet } from "@/components/connect-wallet"
 import { NetworkSelector } from "@/components/network-selector"
-import { Coins, Wallet, ArrowRightLeft } from "lucide-react"
+import { Coins, Wallet, ArrowRightLeft, Home } from "lucide-react"
 import { networks } from "@/lib/networks"
 import { fetchAllTokenBalances } from "@/lib/api"
 import type { NetworkConfig, TokenBalance, GasTokenBalance, SelectedToken } from "@/types/api"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Link from "next/link"
 
 interface WalletData {
   address: string
   label: string
-  tokens: Record<string, TokenBalance[]>
+  tokens: Record<string, TokenBalance[] | null>
   gasBalances: Record<string, GasTokenBalance>
 }
 
@@ -44,7 +45,7 @@ export default function TokenDumper() {
       )
 
       setWallets((prev) => {
-        const newWallets = [...prev, { address, label, tokens, gasBalances }]
+        const newWallets: WalletData[] = [...prev, { address, label, tokens, gasBalances }]
         if (newWallets.length === 1) {
           setReceiveAddress(address)
         }
@@ -67,7 +68,7 @@ export default function TokenDumper() {
     // Refresh tokens for all connected wallets
     setIsLoading(true)
     try {
-      const updatedWallets = await Promise.all(
+      const updatedWallets: WalletData[] = await Promise.all(
         wallets.map(async (wallet) => {
           const { tokens, gasBalances } = await fetchAllTokenBalances(
             networks.filter((n) => n.enabled),
@@ -121,13 +122,13 @@ export default function TokenDumper() {
       Object.entries(wallet.tokens).forEach(([networkId, tokens]) => {
         if (!acc[networkId]) {
           acc[networkId] = tokens
-        } else {
-          acc[networkId] = [...acc[networkId], ...tokens]
+        } else if (acc[networkId] && tokens) {
+          acc[networkId] = [...(acc[networkId] || []), ...tokens]
         }
       })
       return acc
     },
-    {} as Record<string, TokenBalance[]>,
+    {} as Record<string, TokenBalance[] | null>,
   )
 
   const allGasBalances = wallets.reduce(
@@ -163,11 +164,19 @@ export default function TokenDumper() {
   return (
     <div className="min-h-screen flex flex-col items-center p-4 md:p-8 bg-black/80">
       <div className="w-full max-w-3xl space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Token Dumper
-          </h1>
-          <p className="text-white/80">Convert your dust tokens into ETH or SOL in one click</p>
+        <div className="flex justify-between items-center">
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              Token Dumper
+            </h1>
+            <p className="text-white/80">Convert your dust tokens into ETH or SOL in one click</p>
+          </div>
+          <Link href="/">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              Go to Home
+            </Button>
+          </Link>
         </div>
 
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
@@ -198,7 +207,7 @@ export default function TokenDumper() {
             <Card className="border-none bg-black/50 backdrop-blur-sm shadow-xl">
               <CardHeader>
                 <CardTitle>Connect Your Wallets</CardTitle>
-                <CardDescription>Add EVM and Solana wallets to start dumping your tokens.</CardDescription>
+                <CardDescription>Add EVM wallets to start dumping your tokens.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <ConnectWallet onConnect={handleWalletConnect} walletCount={wallets.length} />

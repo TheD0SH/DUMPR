@@ -8,6 +8,7 @@ export const networks: NetworkConfig[] = [
     icon: "/networks/eth.svg",
     enabled: true,
   },
+   /*
   {
     id: "optimism",
     name: "Optimism",
@@ -15,6 +16,28 @@ export const networks: NetworkConfig[] = [
     icon: "/networks/op.svg",
     enabled: true,
   },
+    {
+    id: "polygon",
+    name: "Polygon",
+    endpoint: "https://polygon.blockscout.com",
+    icon: "/networks/matic.svg",
+    enabled: true,
+  },
+    {
+    id: "zksync",
+    name: "zkSync Era",
+    endpoint: "https://zksync.blockscout.com",
+    icon: "/networks/zksync.svg",
+    enabled: true,
+  },
+  {
+    id: "gnosis",
+    name: "Gnosis",
+    endpoint: "https://gnosis.blockscout.com",
+    icon: "/networks/gno.svg",
+    enabled: true,
+  },
+    */
   {
     id: "base",
     name: "Base",
@@ -29,28 +52,8 @@ export const networks: NetworkConfig[] = [
     icon: "/networks/arb.svg",
     enabled: true,
   },
-  {
-    id: "polygon",
-    name: "Polygon",
-    endpoint: "https://polygon.blockscout.com",
-    icon: "/networks/matic.svg",
-    enabled: true,
-  },
   // Removed potentially unavailable networks to prevent 404 errors
-  {
-    id: "zksync",
-    name: "zkSync Era",
-    endpoint: "https://zksync.blockscout.com",
-    icon: "/networks/zksync.svg",
-    enabled: true,
-  },
-  {
-    id: "gnosis",
-    name: "Gnosis",
-    endpoint: "https://gnosis.blockscout.com",
-    icon: "/networks/gno.svg",
-    enabled: true,
-  },
+
   {
     id: "flow",
     name: "Flow",

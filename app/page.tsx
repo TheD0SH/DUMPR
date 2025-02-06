@@ -2,6 +2,15 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import type { TokenBalance, GasTokenBalance } from "@/types/api"
+
+// Update the WalletData interface
+interface WalletData {
+  address: string
+  label: string
+  tokens: Record<string, TokenBalance[] | null>
+  gasBalances: Record<string, GasTokenBalance>
+}
 
 export default function LandingPage() {
   //const [isVideoLoaded, setIsVideoLoaded] = useState(false)
@@ -229,7 +238,7 @@ export default function LandingPage() {
 
         <footer className="bg-black py-8">
           <div className="container mx-auto px-4 text-center text-gray-400">
-            <p>&copy; 2024 DUMPR Agent. All rights reserved.</p>
+            <p>&copy; 2025 DUMPR Agent. All rights reserved.</p>
           </div>
         </footer>
       </div>

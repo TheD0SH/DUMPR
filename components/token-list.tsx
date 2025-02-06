@@ -8,7 +8,7 @@ import type { TokenBalance, GasTokenBalance, SelectedToken } from "@/types/api"
 import { formatTokenValue, calculateUSDValue, calculateTotalUSDValue } from "@/lib/api"
 
 interface TokenListProps {
-  tokens: Record<string, TokenBalance[]>
+  tokens: Record<string, TokenBalance[] | null>
   gasBalances: Record<string, GasTokenBalance>
   isLoading: boolean
   onTokenSelect: (
@@ -59,6 +59,7 @@ export const TokenList = ({
 
   const handleSelectAll = (networkId: string) => {
     const networkTokens = tokens[networkId] || []
+    if (!networkTokens) return // Exit if no tokens found for this network
     const gasToken = gasBalances[networkId]
     const allTokenAddresses = [...(gasToken ? [networkId] : []), ...networkTokens.map((t) => t.token.address)]
     const allSelected = allTokenAddresses.every((address) =>
@@ -88,11 +89,14 @@ export const TokenList = ({
   return (
     <div className="space-y-4">
       {networkIds.map((networkId) => {
-        const networkTokens = tokens[networkId] || []
+        const networkTokens = tokens[networkId] || null
         const gasBalance = gasBalances[networkId]
         const totalValue = calculateTotalNetworkValue(networkId)
         const isExpanded = expandedNetworks[networkId]
-        const allTokenAddresses = [...(gasBalance ? [networkId] : []), ...networkTokens.map((t) => t.token.address)]
+        const allTokenAddresses = [
+          ...(gasBalance ? [networkId] : []),
+          ...(networkTokens?.map((t) => t.token.address) || []),
+        ]
         const allSelected = allTokenAddresses.every((address) =>
           selectedTokens[networkId]?.some((token) => token.address === address),
         )
@@ -108,7 +112,7 @@ export const TokenList = ({
                 <h3 className="text-sm font-medium capitalize">{networkId}</h3>
               </div>
               <div className="text-sm text-muted-foreground">
-                {networkTokens.length + (gasBalance ? 1 : 0)} tokens | {totalValue}
+                {networkTokens ? `${networkTokens.length + (gasBalance ? 1 : 0)} tokens` : "No tokens"} | {totalValue}
               </div>
             </div>
 
@@ -156,45 +160,49 @@ export const TokenList = ({
                       <span className="text-sm text-muted-foreground">${gasBalance.usdBalance}</span>
                     </li>
                   )}
-                  {networkTokens.length > 0 ? (
-                    networkTokens.map((token, index) => {
-                      const formattedValue = formatTokenValue(token.value, token.token.decimals)
-                      const usdValue = calculateUSDValue(token.value, token.token.decimals, token.token.exchange_rate)
-                      return (
-                        <li
-                          key={`${networkId}-${token.token.address}-${index}`}
-                          className="flex items-center justify-between bg-white/5 p-3 rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Checkbox
-                              id={`${networkId}-${token.token.address}-${index}`}
-                              checked={selectedTokens[networkId]?.some((t) => t.address === token.token.address)}
-                              onCheckedChange={(checked) =>
-                                onTokenSelect(
-                                  networkId,
-                                  token.token.address,
-                                  checked as boolean,
-                                  token.token.symbol,
-                                  usdValue.replace("$", ""),
-                                )
-                              }
-                            />
-                            <div>
-                              <label
-                                htmlFor={`${networkId}-${token.token.address}-${index}`}
-                                className="text-sm font-medium cursor-pointer"
-                              >
-                                {token.token.symbol}
-                              </label>
-                              <p className="text-xs text-muted-foreground">Balance: {formattedValue}</p>
+                  {networkTokens ? (
+                    networkTokens.length > 0 ? (
+                      networkTokens.map((token, index) => {
+                        const formattedValue = formatTokenValue(token.value, token.token.decimals)
+                        const usdValue = calculateUSDValue(token.value, token.token.decimals, token.token.exchange_rate)
+                        return (
+                          <li
+                            key={`${networkId}-${token.token.address}-${index}`}
+                            className="flex items-center justify-between bg-white/5 p-3 rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                id={`${networkId}-${token.token.address}-${index}`}
+                                checked={selectedTokens[networkId]?.some((t) => t.address === token.token.address)}
+                                onCheckedChange={(checked) =>
+                                  onTokenSelect(
+                                    networkId,
+                                    token.token.address,
+                                    checked as boolean,
+                                    token.token.symbol,
+                                    usdValue.replace("$", ""),
+                                  )
+                                }
+                              />
+                              <div>
+                                <label
+                                  htmlFor={`${networkId}-${token.token.address}-${index}`}
+                                  className="text-sm font-medium cursor-pointer"
+                                >
+                                  {token.token.symbol}
+                                </label>
+                                <p className="text-xs text-muted-foreground">Balance: {formattedValue}</p>
+                              </div>
                             </div>
-                          </div>
-                          <span className="text-sm text-muted-foreground">{usdValue}</span>
-                        </li>
-                      )
-                    })
+                            <span className="text-sm text-muted-foreground">{usdValue}</span>
+                          </li>
+                        )
+                      })
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No additional tokens detected for this network</p>
+                    )
                   ) : (
-                    <p className="text-sm text-muted-foreground">No additional tokens detected for this network</p>
+                    <p className="text-sm text-muted-foreground">No tokens found for this network</p>
                   )}
                 </ul>
               </div>
@@ -206,4 +214,3 @@ export const TokenList = ({
   )
 }
 
-/// redploy 

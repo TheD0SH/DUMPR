@@ -56,7 +56,7 @@ export function calculateTotalUSDValue(tokens: TokenBalance[]): string {
   })
 }
 
-export async function fetchTokenBalances(network: NetworkConfig, address: string): Promise<TokenBalance[]> {
+export async function fetchTokenBalances(network: NetworkConfig, address: string): Promise<TokenBalance[] | null> {
   try {
     const response = await fetch(`${network.endpoint}/api/v2/addresses/${address}/token-balances`, {
       headers: {
@@ -66,7 +66,7 @@ export async function fetchTokenBalances(network: NetworkConfig, address: string
 
     if (response.status === 404) {
       console.log(`No tokens found for address ${address} on ${network.name}`)
-      return []
+      return null
     }
 
     if (!response.ok) {
@@ -174,11 +174,11 @@ export async function fetchAllTokenBalances(networks: NetworkConfig[], address: 
       if (result.status === "fulfilled") {
         acc[networks[index].id] = result.value
       } else {
-        acc[networks[index].id] = []
+        acc[networks[index].id] = null
       }
       return acc
     },
-    {} as Record<string, TokenBalance[]>,
+    {} as Record<string, TokenBalance[] | null>,
   )
 
   const gasBalances = gasResults.reduce(
